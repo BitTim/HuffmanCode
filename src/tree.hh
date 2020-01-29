@@ -28,6 +28,37 @@ public:
     this->rate = rate;
     this->value = value;
   }
+
+  long int checkVal(std::string val)
+  {
+    long int returnVal;
+    if(this->node0 == nullptr || this->node1 == nullptr) return 2;
+
+    if(this->node0->value.find(val, 0) != std::string::npos)
+    {
+      printf("[I] Found value %s in node0 off Node %s", val.c_str(), this->value.c_str());
+      returnVal = this->node0->checkVal(val);
+
+      returnVal << 1;
+      returnVal += (0 & 0x01);
+
+      return returnVal;
+    }
+
+    if(this->node1->value.find(val, 0) != std::string::npos)
+    {
+      printf("[I] Found value %s in node1 off Node %s", val.c_str(), this->value.c_str());
+      returnVal = this->node1->checkVal(val);
+      
+      returnVal << 1;
+      returnVal += (1 & 0x01);
+
+      return returnVal;
+    }
+
+    printf("[E] Error while tracing path in tree of the value \"%s\"", val.c_str());
+    return -1;
+  }
 };
 
 bool compareByRate(const Node &a, const Node &b)
@@ -64,6 +95,22 @@ public:
     for(int i = 0; i < nodes.size(); i++) printf("%s %d%\n", nodes[i].value.c_str(), nodes[i].rate);
 
     while(!stop) { createChildNode(); }
+  }
+
+  std::vector<long int> encode(std::string text)
+  {
+    std::vector<long int> values;
+    for(int i = 0; i < text.length(); i++)
+    {
+      values.push_back(nodes[nodes.size() - 1].checkVal(std::string(1, text[i])));
+    }
+
+    return values;
+  }
+
+  std::string decode(std::vector<int> values)
+  {
+
   }
 };
 
