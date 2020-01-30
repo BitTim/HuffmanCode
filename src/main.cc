@@ -12,12 +12,12 @@ void init()
 int main(int argc, char* argv[])
 {
   init();
-  std::vector<long int> values = tree.encode("abc");
+  std::vector<int> values = tree.encode("abc");
   printf("[I] Finished encoding. Result:\n");
 
   for(int i = 0; i < values.size(); i++)
   {
-    printf("-> [%d] %02x\n", i, values[i]);
+    printf("-> [%d] %d\n", i, values[i]);
   }
 
   return 0;

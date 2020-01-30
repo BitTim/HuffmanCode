@@ -29,35 +29,37 @@ public:
     this->value = value;
   }
 
-  long int checkVal(std::string val)
+  std::vector<int> visit(std::string val)
   {
-    long int returnVal;
-    if(this->node0 == nullptr || this->node1 == nullptr) return 2;
+    std::vector<int> returnVec;
+    if(this->node0 == nullptr || this->node1 == nullptr)
+    {
+      printf("[I] Node %s returned 2, has no child nodes\n", this->value.c_str());
+      returnVec.push_back(2);
+      return returnVec;
+    }
 
+    printf("[I] Finding substring %s in Node0 %s %d\n", val.c_str(), this->node0->value.c_str(), this->node0->value.find(val, 0));
     if(this->node0->value.find(val, 0) != std::string::npos)
     {
-      printf("[I] Found value %s in node0 off Node %s", val.c_str(), this->value.c_str());
-      returnVal = this->node0->checkVal(val);
-
-      returnVal << 1;
-      returnVal += (0 & 0x01);
-
-      return returnVal;
+      printf("[I] Node %s returned 0, child node is %s\n", this->value.c_str(), this->node0->value.c_str());
+      returnVec = this->node0->visit(val);
+      returnVec.push_back(0);
+      return returnVec;
     }
 
+    printf("[I] Finding substring %s in Node1 %s %d\n", val.c_str(), this->node1->value.c_str(), this->node1->value.find(val, 0));
     if(this->node1->value.find(val, 0) != std::string::npos)
     {
-      printf("[I] Found value %s in node1 off Node %s", val.c_str(), this->value.c_str());
-      returnVal = this->node1->checkVal(val);
-      
-      returnVal << 1;
-      returnVal += (1 & 0x01);
-
-      return returnVal;
+      printf("[I] Node %s returned 1, child node is %s\n", this->value.c_str(), this->node1->value.c_str());
+      returnVec = this->node1->visit(val);
+      returnVec.push_back(1);
+      return returnVec;
     }
 
-    printf("[E] Error while tracing path in tree of the value \"%s\"", val.c_str());
-    return -1;
+    printf("[E] Failed to find Path for %s\n", val.c_str());
+    returnVec.push_back(-1);
+    return returnVec;
   }
 };
 
@@ -80,7 +82,7 @@ public:
     nodes[0].visited = true;
     nodes[1].visited = true;
 
-    printf("New node %s %d connected to: %s %d, %c %d\n", nodes[nodes.size() - 1].value.c_str(), nodes[nodes.size() - 1].rate, nodes[nodes.size() - 1].node0->value.c_str(), nodes[nodes.size() - 1].node0->rate, nodes[nodes.size() - 1].node1->value.c_str(), nodes[nodes.size() - 1].node1->rate);
+    printf("[I] New node %s %d connected to: %s %d, %c %d\n", nodes[nodes.size() - 1].value.c_str(), nodes[nodes.size() - 1].rate, nodes[nodes.size() - 1].node0->value.c_str(), nodes[nodes.size() - 1].node0->rate, nodes[nodes.size() - 1].node1->value.c_str(), nodes[nodes.size() - 1].node1->rate);
     if(nodes[nodes.size() - 1].rate >= 100) stop = true;
 
     std::sort(nodes.begin(), nodes.end(), compareByRate);
@@ -92,17 +94,22 @@ public:
     for(int i = 0; i < alphabet.size(); i++) nodes.push_back(Node(nullptr, nullptr, alphabet[i].r, std::string(1, alphabet[i].c)));
     std::sort(nodes.begin(), nodes.end(), compareByRate);
 
-    for(int i = 0; i < nodes.size(); i++) printf("%s %d%\n", nodes[i].value.c_str(), nodes[i].rate);
-
     while(!stop) { createChildNode(); }
+
+    printf("[I] Printing sorted Nodes:\n");
+    for(int i = 0; i < nodes.size(); i++)
+    {
+      printf("-> [%d] %s %d: node0 %s %d, node1 %s %d\n", i, nodes[i].value.c_str(), nodes[i].rate, nodes[i].node0->value.c_str(), nodes[i].node0->rate, nodes[i].node1->value.c_str(), nodes[i].node1->rate);
+    }
   }
 
-  std::vector<long int> encode(std::string text)
+  std::vector<int> encode(std::string text)
   {
-    std::vector<long int> values;
+    std::vector<int> values;
     for(int i = 0; i < text.length(); i++)
     {
-      values.push_back(nodes[nodes.size() - 1].checkVal(std::string(1, text[i])));
+      printf("[I] Encoding \"%c\", starting at node %s\n", text[i], nodes[0].value.c_str());
+      values = (nodes[0].visit(std::string(1, text[i])));
     }
 
     return values;
@@ -110,7 +117,7 @@ public:
 
   std::string decode(std::vector<int> values)
   {
-
+    return "";
   }
 };
 
