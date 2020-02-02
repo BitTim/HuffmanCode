@@ -1,123 +1,151 @@
 #ifndef TREE_HH
 #define TREE_HH
 
+#include <string>
 #include <vector>
 #include <algorithm>
-#include <string>
 
-struct CharWithRate
+struct NodeData
 {
-  char c;
-  int r;
+  std::string value;
+  int rate;
 };
 
 class Node
 {
 public:
-  Node* node0;
-  Node* node1;
-  int rate;
-  std::string value;
+  Node* node0 = nullptr;
+  Node* node1 = nullptr;
+  std::string value = "";
+  int rate = 0;
   bool visited = false;
 
   Node() { }
-  Node(Node* node0, Node* node1, int rate, std::string value = "\0")
+  Node(Node* nNode0, Node* nNode1, std::string nValue, int nRate)
   {
-    this->node0 = node0;
-    this->node1 = node1;
-    this->rate = rate;
-    this->value = value;
+    node0 = nNode0;
+    node1 = nNode1;
+    value = nValue;
+    rate = nRate;
   }
 
-  std::vector<int> visit(std::string val)
+  std::vector<int> visitEncode(char in)
   {
     std::vector<int> returnVec;
-    if(this->node0 == nullptr || this->node1 == nullptr)
-    {
-      printf("[I] Node %s returned 2, has no child nodes\n", this->value.c_str());
-      returnVec.push_back(2);
-      return returnVec;
-    }
 
-    printf("[I] Finding substring %s in Node0 %s %d\n", val.c_str(), this->node0->value.c_str(), this->node0->value.find(val, 0));
-    if(this->node0->value.find(val, 0) != std::string::npos)
+    if(node0->value.find(std::string(1, in), 0) != std::string::npos)
     {
-      printf("[I] Node %s returned 0, child node is %s\n", this->value.c_str(), this->node0->value.c_str());
-      returnVec = this->node0->visit(val);
+      if(node0->node0 != nullptr && node0->node1 != nullptr) returnVec = node0->visitEncode(in);
       returnVec.push_back(0);
       return returnVec;
     }
 
-    printf("[I] Finding substring %s in Node1 %s %d\n", val.c_str(), this->node1->value.c_str(), this->node1->value.find(val, 0));
-    if(this->node1->value.find(val, 0) != std::string::npos)
+    if(node1->value.find(std::string(1, in), 0) != std::string::npos)
     {
-      printf("[I] Node %s returned 1, child node is %s\n", this->value.c_str(), this->node1->value.c_str());
-      returnVec = this->node1->visit(val);
+      if(node1->node0 != nullptr && node1->node1 != nullptr) returnVec = node1->visitEncode(in);
       returnVec.push_back(1);
       return returnVec;
     }
 
-    printf("[E] Failed to find Path for %s\n", val.c_str());
     returnVec.push_back(-1);
+    return returnVec;
+  }
+
+  NodeData visitDecode(std::vector<int> in, int index) //Repurposing NodeData Structure
+  {
+    NodeData returnVec;
+    if(node0 == nullptr || node1 == nullptr)
+    {
+      returnVec.value = value;
+      returnVec.rate = index;
+      return returnVec;
+    }
+
+    if(in[index] == 0) return node0->visitDecode(in, index + 1);
+    if(in[index] == 1) return node1->visitDecode(in, index + 1);
+
+    returnVec.value = "ERROR";
+    returnVec.rate = -1;
     return returnVec;
   }
 };
 
-bool compareByRate(const Node &a, const Node &b)
+bool sortSmallestRate(Node *a, Node *b)
 {
-  if(a.visited) return false;
-  if(b.visited) return true;
-  else return a.rate < b.rate;
+  if(a->visited) return false;
+  if(b->visited) return true;
+  else return a->rate < b->rate;
+}
+
+bool sortHighestRate(Node *a, Node *b)
+{
+  if(a->visited) return false;
+  if(b->visited) return true;
+  else return a->rate > b->rate;
 }
 
 class Tree
 {
+private:
+  std::vector<Node*> nodes;
+
 public:
-  std::vector<Node> nodes;
-  bool stop = false;
+  Node* root = nullptr;
 
-  void createChildNode()
+  Tree() { }
+  Tree(std::vector<NodeData> alphabet)
   {
-    nodes.push_back(Node(&nodes[0], &nodes[1], nodes[0].rate + nodes[1].rate, nodes[0].value + nodes[1].value));
-    nodes[0].visited = true;
-    nodes[1].visited = true;
+    //Create initial Nodes
+    for(NodeData nd : alphabet) nodes.push_back((new Node(nullptr, nullptr, nd.value, nd.rate)));
+    std::sort(nodes.begin(), nodes.end(), sortSmallestRate);
 
-    printf("[I] New node %s %d connected to: %s %d, %c %d\n", nodes[nodes.size() - 1].value.c_str(), nodes[nodes.size() - 1].rate, nodes[nodes.size() - 1].node0->value.c_str(), nodes[nodes.size() - 1].node0->rate, nodes[nodes.size() - 1].node1->value.c_str(), nodes[nodes.size() - 1].node1->rate);
-    if(nodes[nodes.size() - 1].rate >= 100) stop = true;
-
-    std::sort(nodes.begin(), nodes.end(), compareByRate);
-  }
-
-  Tree() { };
-  Tree(std::vector<CharWithRate> alphabet)
-  {
-    for(int i = 0; i < alphabet.size(); i++) nodes.push_back(Node(nullptr, nullptr, alphabet[i].r, std::string(1, alphabet[i].c)));
-    std::sort(nodes.begin(), nodes.end(), compareByRate);
-
-    while(!stop) { createChildNode(); }
-
-    printf("[I] Printing sorted Nodes:\n");
-    for(int i = 0; i < nodes.size(); i++)
+    //Create the temporary nodes needed for the tree
+    while(nodes[0]->rate < 100)
     {
-      printf("-> [%d] %s %d: node0 %s %d, node1 %s %d\n", i, nodes[i].value.c_str(), nodes[i].rate, nodes[i].node0->value.c_str(), nodes[i].node0->rate, nodes[i].node1->value.c_str(), nodes[i].node1->rate);
-    }
-  }
-
-  std::vector<int> encode(std::string text)
-  {
-    std::vector<int> values;
-    for(int i = 0; i < text.length(); i++)
-    {
-      printf("[I] Encoding \"%c\", starting at node %s\n", text[i], nodes[0].value.c_str());
-      values = (nodes[0].visit(std::string(1, text[i])));
+      nodes.push_back(new Node(nodes[0], nodes[1], nodes[0]->value + nodes[1]->value, nodes[0]->rate + nodes[1]->rate));
+      nodes[0]->visited = true;
+      nodes[1]->visited = true;
+      std::sort(nodes.begin(), nodes.end(), sortSmallestRate);
     }
 
-    return values;
+    //Sort the temporary Nodes from highest to lowest and assign root Node
+    for(int i = 0; i < nodes.size(); i++) nodes[i]->visited = false;
+    std::sort(nodes.begin(), nodes.end(), sortHighestRate);
+    root = nodes[0];
+
+    //Print out the sorted nodes
+    for(int i = 0; i < nodes.size(); i++) if(nodes[i]->node0 != nullptr && nodes[i]->node1 != nullptr) printf("%s %d% -> node0: %s %d%, node1: %s %d%\n", nodes[i]->value.c_str(), nodes[i]->rate, nodes[i]->node0->value.c_str(), nodes[i]->node0->rate, nodes[i]->node1->value.c_str(), nodes[i]->node1->rate);
   }
 
-  std::string decode(std::vector<int> values)
+  std::vector<int> encode(std::string in)
   {
-    return "";
+    std::vector<int> returnVec;
+    std::vector<std::vector<int>> returnVals;
+
+    for(char c : in) returnVals.push_back(root->visitEncode(c));
+    for(std::vector<int> v : returnVals)
+    {
+      std::reverse(v.begin(), v.end());
+      returnVec.insert(returnVec.end(), v.begin(), v.end());
+    }
+
+    return returnVec;
+  }
+
+  std::string decode(std::vector<int> in)
+  {
+    std::string returnString;
+    NodeData tmp;
+    int index = 0;
+
+    while(index < in.size())
+    {
+      tmp = root->visitDecode(in, index);
+      index = tmp.rate;
+      returnString.append(tmp.value);
+    }
+
+    return returnString;
   }
 };
 
