@@ -82,7 +82,7 @@ public:
     nodes[0].visited = true;
     nodes[1].visited = true;
 
-    printf("[I] New node %s %d connected to: %s %d, %c %d\n", nodes[nodes.size() - 1].value.c_str(), nodes[nodes.size() - 1].rate, nodes[nodes.size() - 1].node0->value.c_str(), nodes[nodes.size() - 1].node0->rate, nodes[nodes.size() - 1].node1->value.c_str(), nodes[nodes.size() - 1].node1->rate);
+    printf("[I] New node %s %d connected to: %s %d, %s %d\n", nodes[nodes.size() - 1].value.c_str(), nodes[nodes.size() - 1].rate, nodes[nodes.size() - 1].node0->value.c_str(), nodes[nodes.size() - 1].node0->rate, nodes[nodes.size() - 1].node1->value.c_str(), nodes[nodes.size() - 1].node1->rate);
     if(nodes[nodes.size() - 1].rate >= 100) stop = true;
 
     std::sort(nodes.begin(), nodes.end(), compareByRate);
